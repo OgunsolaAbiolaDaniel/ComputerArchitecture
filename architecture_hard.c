@@ -8,7 +8,12 @@
 /* --- Category: ENDIANNESS (BYTE ORDER) ------------------------------------ */
 
 // E-1 — EASY — ARCHITECTURE
-int is_little_endian(void);
+int is_little_endian(void){
+   uint16_t x = 0x0001;
+   char *p = (uint8_t *)&x;
+   return p[0] == 1;
+};
+
 /* returns: 1 if the architecture is Little Endian, 0 if Big Endian
    Notes:   Create a multi-byte variable (like uint16_t x = 0x0001) and check 
             the first byte in memory using a char pointer.
@@ -17,7 +22,12 @@ int is_little_endian(void);
 */
 
 // E-2 — EASY — ARCHITECTURE
-uint32_t swap_bytes_32(uint32_t val);
+uint32_t swap_bytes_32(uint32_t val){
+   return (val & 0xFF) << 24 |
+          (((val >> 8) & 0xFF) << 16) |
+          (((val >> 16) & 0xFF) << 8) |
+          (((val >> 24) & 0xFF) << 0);
+};
 /* val:     A 32-bit unsigned integer
    returns: The value with all 4 bytes reversed (Big to Little or vice-versa)
    Example 1: swap_bytes_32(0x12345678) returns 0x78563412
@@ -27,7 +37,14 @@ uint32_t swap_bytes_32(uint32_t val);
 /* --- Category: ALIGNMENT & PADDING ---------------------------------------- */
 
 // E-3 — EASY — ARCHITECTURE
-unsigned int get_padding_size(void);
+unsigned int get_padding_size(void){
+    struct S {
+        char a;
+        int b;
+    };
+
+   return sizeof(struct S)-(sizeof(char)+sizeof(int));
+}
 /* returns: The amount of padding bytes in a specific structure
    Notes:   Define a struct { char a; int b; }. Return the difference 
             between sizeof(the_struct) and the sum of the sizes of its members.
@@ -36,7 +53,9 @@ unsigned int get_padding_size(void);
 */
 
 // E-4 — EASY — ARCHITECTURE
-int is_aligned(void *ptr, unsigned int alignment);
+int is_aligned(void *ptr, unsigned int alignment){
+   return (uintptr_t)ptr % alignment == 0;
+};
 /* ptr:       A memory address
    alignment: A power of two (2, 4, 8, 16...)
    returns:   1 if the address is a multiple of alignment, 0 otherwise
@@ -48,7 +67,9 @@ int is_aligned(void *ptr, unsigned int alignment);
 /* --- Category: POINTER ARITHMETIC & TYPES --------------------------------- */
 
 // E-5 — EASY — ARCHITECTURE
-int pointer_distance_bytes(void *p1, void *p2);
+int pointer_distance_bytes(void *p1, void *p2){
+   return (char *)p2 - (char *)p1;
+};
 /* p1, p2:  Two memory addresses
    returns: The number of bytes between p2 and p1 (p2 - p1)
    Notes:   Cast pointers to (char *) before subtracting to ensure byte-level counting.
@@ -57,7 +78,9 @@ int pointer_distance_bytes(void *p1, void *p2);
 */
 
 // E-6 — EASY — ARCHITECTURE
-void write_at_offset(void *base, int offset, uint8_t value);
+void write_at_offset(void *base, int offset, uint8_t value){
+  value= *((char*)base + offset );
+};
 /* base:    Base memory address
    offset:  Number of bytes to move from base
    value:   The byte to write
@@ -69,7 +92,13 @@ void write_at_offset(void *base, int offset, uint8_t value);
 /* --- Category: STRUCTURES & OFFSETS --------------------------------------- */
 
 // E-7 — EASY — ARCHITECTURE
-unsigned int offset_of_member(void);
+unsigned int offset_of_member(void){
+struct S {
+   char a; char b; int c;
+};
+struct S s;
+return (unsigned int)((char *)&s.c - (char *)&s);
+};
 /* returns: The byte offset of member 'c' within a structure
    Notes:   Define struct { char a; char b; int c; }. 
             Calculate manually by casting the struct to bytes.
@@ -80,7 +109,9 @@ unsigned int offset_of_member(void);
 /* --- Category: MEMORY LAYOUT & PUNNING ------------------------------------ */
 
 // E-9 — EASY — ARCHITECTURE
-unsigned int get_pointer_size(void);
+unsigned int get_pointer_size(void){
+   return (unsigned int)sizeof(void*);
+};
 /* returns: The size of a memory address pointer in bytes
    Notes:   Use sizeof on a void pointer. This helps determine if the compiled 
             target is a 32-bit or 64-bit architecture.
@@ -89,7 +120,14 @@ unsigned int get_pointer_size(void);
 */
 
 // E-10 — EASY — ARCHITECTURE
-uint32_t float_to_raw_bits(float f);
+uint32_t float_to_raw_bits(float f){
+    union {
+        float input;
+        uint32_t output;
+    } converter;
+    converter.input = f;
+    return converter.output;
+};
 /* f:       A floating-point value
    returns: The exact IEEE-754 bit representation of the float as an integer
    Notes:   Use a union to perform type punning without breaking 
@@ -99,7 +137,10 @@ uint32_t float_to_raw_bits(float f);
 */
 
 // E-11 — EASY — ARCHITECTURE
-uint8_t get_memory_byte(void *ptr, int index);
+uint8_t get_memory_byte(void *ptr, int index){
+   uint8_t *byte_array = (uint8_t *)ptr;
+   return byte_array[index];
+};
 /* ptr:     A pointer to any data type
    index:   The byte offset to read
    returns: The byte value at exactly (ptr + index)
@@ -111,7 +152,10 @@ uint8_t get_memory_byte(void *ptr, int index);
 /* --- Category: ADVANCED ALIGNMENT ----------------------------------------- */
 
 // E-12 — EASY — ARCHITECTURE
-unsigned int align_up(unsigned int size, unsigned int alignment);
+unsigned int align_up(unsigned int size, unsigned int alignment){
+   unsigned int rem = size % alignment;
+   return rem != 0 ? (size+(alignment-rem)) : rem;
+};
 /* size:      The original size in bytes
    alignment: The required alignment boundary (a power of 2, like 4 or 8)
    returns:   The size rounded up to the nearest multiple of the alignment
@@ -120,7 +164,9 @@ unsigned int align_up(unsigned int size, unsigned int alignment);
 */
 
 // E-13 — EASY — ARCHITECTURE
-void* get_array_element_address(void *base, unsigned int elem_size, int index);
+void* get_array_element_address(void *base, unsigned int elem_size, int index){
+   return (uint8_t)base + (index * elem_size);
+};
 /* base:      The starting address of an array
    elem_size: The size of a single element in bytes
    index:     The array index to access
